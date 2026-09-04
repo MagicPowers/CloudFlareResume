@@ -1,4 +1,4 @@
-# davidpower.dev
+# davidpower.eu
 
 Personal CV site for David Power — Engineering Manager / Tech Lead, Dublin.
 
@@ -123,16 +123,17 @@ Every route prerenders, so `npm run build` emits a plain 2.1 MB folder at `out/`
 that any static host will serve. No Node process, no server, no runtime.
 
 See [DEPLOYMENT.md](./DEPLOYMENT.md) for the full analysis and a step-by-step
-plan. The short version: Cloudflare Pages on the free tier, `davidpower.ie`
-canonical, `davidpower.eu` redirecting to it, and set `NODE_VERSION=22` in the
-build environment or the build will fail.
+plan. The short version: a Cloudflare Worker serving static assets, free tier,
+on `davidpower.eu` (registered at GoDaddy, nameservers delegated to Cloudflare).
 
-Two things to settle first:
+`wrangler.jsonc` in the repo root is load-bearing — without it, `wrangler
+deploy` auto-detects Next.js, assumes a server-rendered app, and rewrites the
+project to use the OpenNext adapter mid-build, which then fails looking for
+`.next/standalone`. A static export never produces that.
 
-- Set the real domain in `src/data/profile.ts` (`profile.site`) — it feeds the
-  canonical URL, the OG tags, the sitemap and `robots.txt`.
-- Decide whether you want your phone number on a public page. It's currently in
-  `profile.ts`, on the contact card, in the command palette and in the CV.
+One thing left to settle: decide whether you want your phone number on a public
+page. It's currently in `profile.ts`, on the contact card, in the command
+palette and in the CV.
 
 ## Attribution
 

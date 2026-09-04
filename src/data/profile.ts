@@ -13,7 +13,7 @@ export const profile = {
   phoneHref: "+353876833198",
   linkedin: "https://linkedin.com/in/powerd3",
   linkedinHandle: "powerd3",
-  site: "https://davidpower.dev",
+  site: "https://davidpower.eu",
 
   /** One line. The thing a recruiter reads in 1.5 seconds. */
   tagline:

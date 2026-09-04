@@ -1,8 +1,12 @@
 # Deployment plan
 
-**Recommendation: Cloudflare Pages, free tier, with `davidpower.ie` as the
-canonical domain and `davidpower.eu` redirecting to it. Ongoing cost: your two
-domain renewals at letshost and nothing else.**
+**Recommendation: Cloudflare, free tier, serving `davidpower.eu`. Registration
+stays at GoDaddy; only the nameservers move. Ongoing cost: the €8.99/yr domain
+renewal and nothing else.**
+
+> The `.ie` was €40/yr and has been allowed to expire. Everything below uses
+> `davidpower.eu` as the single canonical domain, which removes the second zone
+> and the cross-domain redirect entirely.
 
 ---
 
@@ -60,11 +64,15 @@ Node process involved.
 
 ### Why not GitHub Pages
 
-It would genuinely work, and it's the familiar path. Two things rule it out:
+Worth being straight about this: my original argument against GitHub Pages was
+that it reads a single `CNAME` file and therefore handles one custom domain per
+repository, which didn't work when the plan involved `.ie` and `.eu`. **Now that
+there's only `davidpower.eu`, that objection is gone and GitHub Pages would
+genuinely work.**
 
-**One custom domain per repository.** GitHub Pages reads a single `CNAME` file.
-You have two domains and want one to redirect to the other. You'd need a second
-repo or a third-party redirect service to handle `davidpower.eu`.
+It's still not what I'd switch to, for one remaining reason and one practical
+one. The remaining reason is below. The practical one is that Cloudflare is
+already set up and building — there's nothing to gain by moving.
 
 **No image layer.** Once you add "loads of photos", they're served as-is at
 whatever size came off the camera. That's fixable at build time (see the image
@@ -111,18 +119,16 @@ That's a day of setup and a permanently larger surface area, to end up slower to
 deploy than the alternative. **There is one good reason to do it anyway — see
 the appendix.**
 
-### Why Cloudflare Pages
+### Why Cloudflare
 
 - **Free, with unmetered bandwidth.** No cap to hit, so no pause-on-cap
   behaviour to worry about.
-- **Both domains on one project.** 100 custom domains per project, and the
-  `.eu → .ie` redirect is a native Redirect Rule, free, no code.
-- **Free DNS with CNAME flattening**, which is what lets an apex domain
-  (`davidpower.ie` with no `www`) point at a hosted site at all. Many registrar
-  DNS panels, letshost included, don't offer ALIAS/ANAME records — this solves
-  it cleanly.
-- **You keep registration at letshost.** You only change nameservers. No
-  transfer, no new registrar relationship.
+- **Free DNS with CNAME flattening**, which is what lets a bare apex domain
+  (`davidpower.eu` with no `www`) point at a hosted site at all. The DNS spec
+  forbids a CNAME at the apex, and GoDaddy's panel offers no ALIAS/ANAME record
+  to work around it. Cloudflare solves this transparently.
+- **You keep registration at GoDaddy.** You only change nameservers. No
+  transfer, no new registrar relationship, no change to the €8.99 renewal.
 - **No commercial-use clause**, so if you ever add a "hire me" page or a link
   to consulting work, nothing changes.
 - Free TLS, free DDoS protection, free privacy-preserving analytics.
@@ -142,9 +148,8 @@ concurrent build. You will not approach either.
 | TLS certificates | €0 |
 | Bandwidth | €0, unmetered |
 | GitHub repository | €0 |
-| `davidpower.ie` renewal (letshost) | ~€20–30/yr |
-| `davidpower.eu` renewal (letshost) | ~€10–15/yr |
-| **Total ongoing** | **Your existing domain renewals, nothing more** |
+| `davidpower.eu` renewal (GoDaddy) | €8.99/yr |
+| **Total ongoing** | **€8.99/yr** |
 
 ---
 
@@ -152,14 +157,23 @@ concurrent build. You will not approach either.
 
 ### Phase 0 — Decisions before anything ships
 
-- [ ] **Confirm the canonical domain.** I'd use `davidpower.ie`: you're Dublin
-      based, an Irish citizen, and targeting Irish and EU roles. `.eu`
-      redirects to it. Everything below assumes that; swap if you disagree.
+- [x] **Canonical domain: `davidpower.eu`.** Registered at GoDaddy, €8.99/yr,
+      renews 28 July 2027. `.eu` is a perfectly good signal for someone
+      targeting Irish and EU roles, and it's a quarter the price of the `.ie`.
 
-- [ ] **Set the real URL.** In `src/data/profile.ts`, change `site` from the
-      placeholder to `https://davidpower.ie`. It feeds the canonical link tag,
-      the Open Graph tags, `sitemap.xml` and `robots.txt`, so getting it wrong
-      is visible to Google and to LinkedIn's link preview.
+- [x] **`profile.site` is set** to `https://davidpower.eu` in
+      `src/data/profile.ts`. That single value feeds the canonical link tag,
+      the Open Graph tags, `sitemap.xml` and `robots.txt`.
+
+- [ ] **Check what's currently on the domain.** The GoDaddy dashboard shows
+      `davidpower.eu` connected to a site at `parrotcube.site`. Moving
+      nameservers to Cloudflare will disconnect that — intended here, but make
+      sure nothing you care about is running on it first.
+
+- [ ] **Confirm there's no email on the domain.** GoDaddy currently shows
+      "Get custom email @davidpower.eu" as *not* set up, which means no MX
+      records to preserve. If you ever add GoDaddy email later, do it *after*
+      the nameserver move so the records are created in Cloudflare.
 
 - [ ] **Decide about your phone number.** It's currently in `profile.ts`, and
       from there it appears on the contact card, in the command palette and on
@@ -192,97 +206,106 @@ gh repo create davidpower-dev --public --source=. --remote=origin --push
 #   git push -u origin main
 ```
 
-### Phase 2 — Create the Cloudflare Pages project
+### Phase 2 — Create the Cloudflare project
+
+Cloudflare has folded Pages into Workers, and new git-connected projects are
+Workers projects that run a **deploy command** (`npx wrangler deploy`) rather
+than just uploading a folder. That's fine — a Worker can be pure static assets
+with no script at all — but it changes one thing, described below.
 
 1. Sign up at [dash.cloudflare.com](https://dash.cloudflare.com) — free, no card.
-2. **Workers & Pages → Create → Pages → Connect to Git**, authorise GitHub,
-   pick `davidpower-dev`.
+2. **Workers & Pages → Create → Connect to Git**, authorise GitHub, pick the repo.
 3. Build settings:
 
    | Field | Value |
    | --- | --- |
-   | Framework preset | None (or "Next.js (Static HTML Export)") |
    | Build command | `npm run build` |
-   | Build output directory | `out` |
+   | Deploy command | `npx wrangler deploy` |
    | Root directory | `/` |
 
-4. **Add an environment variable — this one bites people:**
+4. **`wrangler.jsonc` in the repo root is mandatory, not optional.**
 
-   | Name | Value |
-   | --- | --- |
-   | `NODE_VERSION` | `22` |
+   If wrangler doesn't find a config file, it auto-detects the framework, sees
+   Next.js, assumes a server-rendered app, and silently rewrites the project to
+   use the OpenNext adapter mid-build. That build then dies looking for
+   `.next/standalone`, which a static export never produces. The config file is
+   what stops that happening:
 
-   Cloudflare's default build image ships an older Node than Next.js 16
-   requires (`>=20.9.0`). Without this the build fails with the exact error I
-   hit locally when the shell defaulted to Node 18.
+   ```jsonc
+   {
+     "name": "cloudflareresume",
+     "compatibility_date": "2026-09-03",
+     "assets": {
+       "directory": "./out",
+       "not_found_handling": "404-page"
+     }
+   }
+   ```
 
-5. **Save and Deploy.** You get a `davidpower-dev.pages.dev` URL in about a
-   minute. Check it works before touching DNS.
+   `name` must match the Worker name in the dashboard or you'll deploy a second,
+   separate Worker. There is deliberately no `main` key — that's what makes it
+   an assets-only Worker.
 
-### Phase 3 — Move DNS to Cloudflare (registration stays at letshost)
+   `wrangler` is pinned as a devDependency for the same reason. An
+   auto-updating deploy tool that rewrites your repo config is exactly the
+   failure above; pinning it means a future version can't surprise you.
 
-Do this for `davidpower.ie` first, then repeat for `davidpower.eu`.
+5. Check the Node version. Cloudflare's build image currently ships Node 24,
+   which is fine. If you ever see `Node.js version ">=20.9.0" is required`, add
+   a `NODE_VERSION` = `22` environment variable in the build settings.
 
-1. Cloudflare dashboard → **Add a site** → `davidpower.ie` → **Free** plan.
-2. Cloudflare scans your existing DNS and shows you two nameservers, something
-   like `xxx.ns.cloudflare.com`.
-3. Log into **letshost.ie** → your domain → **Nameservers** → replace theirs
-   with Cloudflare's two. Save.
-4. Wait for propagation. Usually minutes, occasionally a few hours. Cloudflare
+6. **Save and Deploy.** You get a `*.workers.dev` URL in about a minute. Check
+   it works before touching DNS.
+
+   Verify the deploy log ends with wrangler reading files from `out/` — a line
+   like `Read 76 files from the assets directory`. If instead you see
+   "Configuring project for Next.js with OpenNext", the config file isn't being
+   found.
+
+### Phase 3 — Move DNS to Cloudflare (registration stays at GoDaddy)
+
+**This step is not optional.** Attaching a custom domain to a Worker requires
+the zone to live in your Cloudflare account — Cloudflare has to be answering
+DNS for `davidpower.eu` before it will let you route the domain at your Worker.
+You cannot do this by adding a CNAME in GoDaddy's DNS panel.
+
+1. Cloudflare dashboard → **Add a domain** → `davidpower.eu` → **Free** plan.
+2. Cloudflare scans the existing DNS, then shows two nameservers, something like
+   `xxx.ns.cloudflare.com`. **Review the records it imported** before
+   continuing — anything you still need has to be in that list.
+3. In **GoDaddy**: your domain → **Domain Settings → Nameservers → Change** →
+   *I'll use my own nameservers* → paste Cloudflare's two → Save.
+   - If GoDaddy refuses the change, turn off **Domain Protection** first.
+   - GoDaddy will warn that this disconnects the `parrotcube.site` website
+     currently attached to the domain. That's expected and intended.
+4. Wait for propagation — usually minutes, occasionally a few hours. Cloudflare
    emails you when the zone goes active.
-5. Before you switch, **check the existing DNS records Cloudflare imported** —
-   if you have email on this domain (MX records) they must survive the move, or
-   your mail stops. Cloudflare usually imports them correctly; verify anyway.
 
-> You are *not* transferring the registration. letshost still owns the
-> registration and still takes your renewal money. You're only changing which
-> servers answer DNS queries.
+> You are *not* transferring the registration. GoDaddy still owns it, still
+> renews it, still takes the €8.99. You're only changing which servers answer
+> DNS queries, which has no effect on your renewal price.
 
-### Phase 4 — Attach the domain
+### Phase 4 — Attach the domain to the Worker
 
-1. Pages project → **Custom domains → Set up a custom domain**.
-2. Add `davidpower.ie`. Cloudflare creates the record itself, using CNAME
-   flattening so the apex works.
-3. Add `www.davidpower.ie` as well, so both spellings resolve.
-4. TLS is provisioned automatically. Give it a few minutes, then load
-   `https://davidpower.ie`.
+1. Worker project → **Settings → Domains & Routes → Add → Custom domain**.
+2. Add `davidpower.eu`. Cloudflare creates the DNS record itself and uses CNAME
+   flattening — that's what makes an apex domain work at all, since a bare apex
+   can't be a CNAME under the DNS spec and GoDaddy offers no ALIAS record to
+   work around it.
+3. Add `www.davidpower.eu` as well, so both spellings resolve. The
+   `<link rel="canonical">` already points at the apex, so Google won't treat
+   the two as duplicate content.
+4. TLS is issued automatically. Give it a few minutes, then load
+   `https://davidpower.eu`.
 
-### Phase 5 — Point `.eu` at `.ie`
+### Phase 5 — Verify before you put the link on anything
 
-Do **not** attach `davidpower.eu` to the Pages project — that would serve the
-same site at two addresses, which splits your SEO and looks sloppy. Redirect it.
-
-1. In the `davidpower.eu` zone, add a **proxied** (orange cloud) DNS record so
-   there's something for the rule to act on:
-
-   | Type | Name | Content | Proxy |
-   | --- | --- | --- | --- |
-   | `A` | `@` | `192.0.2.1` | Proxied |
-   | `A` | `www` | `192.0.2.1` | Proxied |
-
-   `192.0.2.1` is the reserved documentation address. Nothing ever connects to
-   it — Cloudflare intercepts at the edge and the rule below answers.
-
-2. **Rules → Redirect Rules → Create rule**:
-
-   - **If**: `Hostname` `equals` `davidpower.eu` **OR** `Hostname` `equals`
-     `www.davidpower.eu`
-   - **Then**: Dynamic redirect, expression:
-     ```
-     concat("https://davidpower.ie", http.request.uri.path)
-     ```
-   - Status: **301 (Permanent)**, preserve query string: on
-
-3. Test: `curl -sI https://davidpower.eu | head -3` should show
-   `301` and `location: https://davidpower.ie/`.
-
-### Phase 6 — Verify before you put the link on anything
-
-- [ ] `https://davidpower.ie` loads, padlock is valid
-- [ ] `https://www.davidpower.ie` loads
-- [ ] `https://davidpower.eu` 301s to `https://davidpower.ie`
-- [ ] `https://davidpower.ie/cv` prints to a clean two-page PDF
-- [ ] `https://davidpower.ie/sitemap.xml` shows the real domain, not the placeholder
+- [ ] `https://davidpower.eu` loads, padlock valid
+- [ ] `https://www.davidpower.eu` loads
+- [ ] `http://davidpower.eu` upgrades to HTTPS
+- [ ] `https://davidpower.eu/cv` prints to a clean two-page PDF
+- [ ] `https://davidpower.eu/sitemap.xml` shows `davidpower.eu`
+- [ ] A nonsense URL like `/nope` returns a real 404, not the homepage
 - [ ] Paste the URL into [LinkedIn's Post Inspector](https://www.linkedin.com/post-inspector/)
       and confirm the OG card renders — this is the preview a recruiter sees
       when you share it, and it's worth getting right
@@ -341,7 +364,7 @@ git push
 ```
 
 Cloudflare builds and deploys in about a minute. Pull requests get their own
-preview URL. If a deploy looks wrong, **Pages → Deployments → Rollback** puts
+preview URL. If a deploy looks wrong, **Workers & Pages → your project → Deployments → Rollback** puts
 the previous one back instantly.
 
 Adding photos:

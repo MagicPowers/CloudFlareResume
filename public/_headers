@@ -1,0 +1,19 @@
+# Cloudflare reads this file from the deployed asset directory.
+# Anything in public/ is copied verbatim into out/ by the static export.
+
+# Next.js generates the OG image and favicon as extensionless files
+# (out/opengraph-image, out/icon). Cloudflare infers Content-Type from the file
+# extension, so without these they're served with no type at all — which means
+# no LinkedIn or Slack link preview, and no favicon in the tab.
+/opengraph-image
+  Content-Type: image/png
+
+/icon
+  Content-Type: image/png
+
+# Everything under /_next/static is content-hashed, so it can be cached forever.
+/_next/static/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/photos/*
+  Cache-Control: public, max-age=604800
