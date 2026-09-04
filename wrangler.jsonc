@@ -1,0 +1,24 @@
+{
+  // This site is a static export: `npm run build` writes a plain folder of
+  // files to out/, and Cloudflare serves them directly. There is no Worker
+  // script, which is why there's no "main" key — that's valid and intended
+  // for assets-only Workers.
+  //
+  // This file also has to exist for a second reason: without it, `wrangler
+  // deploy` auto-detects "Next.js", assumes a server-rendered app, and
+  // rewrites the project to use the OpenNext adapter. That build then fails
+  // looking for .next/standalone, which a static export never produces.
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "cloudflareresume",
+  "compatibility_date": "2026-09-03",
+  "assets": {
+    "directory": "./out",
+    // Serve the exported 404.html for anything that doesn't match a file.
+    // Not "single-page-application" — this site has real routes (/ and /cv),
+    // and a wrong URL should return 404, not silently render the homepage.
+    "not_found_handling": "404-page"
+  },
+  "observability": {
+    "enabled": true
+  }
+}
