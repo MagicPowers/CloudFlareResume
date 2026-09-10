@@ -88,7 +88,7 @@ export function Gallery() {
   return (
     <section id="gallery" className="container-page scroll-mt-24 py-24 sm:py-36">
       <SectionHeader
-        index="05"
+        index="06"
         eyebrow="Receipts"
         title={
           <>

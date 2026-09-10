@@ -4,6 +4,7 @@ import { Hero } from "@/components/hero/Hero";
 import { Marquee } from "@/components/sections/Marquee";
 import { Work } from "@/components/sections/Work";
 import { Timeline } from "@/components/sections/Timeline";
+import { Portraits } from "@/components/sections/Portraits";
 import { Skills } from "@/components/sections/Skills";
 import { CharacterSheet } from "@/components/sections/CharacterSheet";
 import { Gallery } from "@/components/sections/Gallery";
@@ -19,6 +20,7 @@ export default function Home() {
         <Marquee />
         <Work />
         <Timeline />
+        <Portraits />
         <Skills />
         <CharacterSheet />
         <Gallery />

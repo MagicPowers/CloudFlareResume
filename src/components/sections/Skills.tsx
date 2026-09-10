@@ -17,7 +17,7 @@ export function Skills() {
   return (
     <section id="skills" className="container-page scroll-mt-24 py-24 sm:py-36">
       <SectionHeader
-        index="03"
+        index="04"
         eyebrow="Capability"
         title={
           <>

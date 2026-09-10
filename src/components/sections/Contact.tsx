@@ -76,7 +76,7 @@ export function Contact() {
       <div className="grid gap-14 lg:grid-cols-[1.1fr_1fr]">
         <div>
           <SectionHeader
-            index="07"
+            index="08"
             eyebrow="Contact"
             title={
               <>

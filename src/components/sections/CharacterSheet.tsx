@@ -107,7 +107,7 @@ export function CharacterSheet() {
   return (
     <section id="character" className="container-page scroll-mt-24 py-24 sm:py-36">
       <SectionHeader
-        index="04"
+        index="05"
         eyebrow="For the tabletop crowd"
         title={
           <>

@@ -105,7 +105,7 @@ export function Cycling() {
   return (
     <section id="cycling" className="container-page scroll-mt-24 py-24 sm:py-36">
       <SectionHeader
-        index="06"
+        index="07"
         eyebrow="Away from the keyboard"
         title={
           <>
