@@ -10,6 +10,14 @@
  *        2019__first-day-as-team-lead.jpg
  *   2. Add public/photos/captions.json:
  *        { "webio-lead/2019-offsite.jpg": "Team offsite, Wicklow" }
+ *
+ * A filename starting YYYY-MM-DD (or YYYY-MM) is read as the date the photo
+ * was taken. It's shown on the site, and it decides which timeline milestone
+ * the photo appears under.
+ *
+ * If <era>/thumbs/<same filename> exists, grids and cards use it and the
+ * lightbox keeps the full-size file. Without one, the full file is used
+ * everywhere, which works, just heavier.
  */
 import {
   readdirSync,
@@ -64,10 +72,16 @@ function captionFromFilename(name) {
     .replace(/^./, (c) => c.toUpperCase());
 }
 
+function dateFromFilename(name) {
+  const m = /^(\d{4})-(\d{2})(?:-(\d{2}))?/.exec(name);
+  if (!m) return undefined;
+  return m[3] ? `${m[1]}-${m[2]}-${m[3]}` : `${m[1]}-${m[2]}`;
+}
+
 function walk(dir) {
   const out = [];
   for (const entry of readdirSync(dir)) {
-    if (entry.startsWith(".")) continue;
+    if (entry.startsWith(".") || entry === "thumbs") continue;
     const full = join(dir, entry);
     if (statSync(full).isDirectory()) out.push(...walk(full));
     else if (IMAGE_EXT.has(extname(entry).toLowerCase())) out.push(full);
@@ -99,12 +113,17 @@ function main() {
         }
         if (!dims?.width || !dims?.height) continue;
 
+        const name = file.split(/[\\/]/).pop();
+        const thumbFile = join(dir, "thumbs", name);
+
         photos.push({
           src: `/photos/${rel}`,
+          thumb: existsSync(thumbFile) ? `/photos/${era}/thumbs/${name}` : undefined,
           era,
           width: dims.width,
           height: dims.height,
-          caption: captions[rel] ?? captionFromFilename(file.split(/[\\/]/).pop()),
+          date: dateFromFilename(name),
+          caption: captions[rel] ?? captionFromFilename(name),
         });
       }
     }

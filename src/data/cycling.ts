@@ -246,6 +246,10 @@ export type Ride = {
   distanceKm: number;
   colour: string;
   blurb: string;
+  /** YYYY-MM-DD. Shown under the distance. */
+  finished?: string;
+  /** Cycling photos dated inside this window are shown with the ride. */
+  photosBetween?: [from: string, to: string];
   waypoints: { name: string; at: LatLon; major?: boolean }[];
 };
 
@@ -258,6 +262,8 @@ export const rides: Ride[] = [
     colour: "#D4F55C",
     blurb:
       "The classic end-to-end. From the last rock in Cork to the first one in Donegal, through every kind of weather Ireland keeps in stock.",
+    finished: "2018-06-03",
+    photosBetween: ["2018-05-31", "2018-06-03"],
     waypoints: [
       { name: "Mizen Head", at: [51.45, -9.82], major: true },
       { name: "Bantry", at: [51.68, -9.45] },

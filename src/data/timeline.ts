@@ -115,6 +115,18 @@ export const timeline: Milestone[] = [
     colour: "#F5A65C",
   },
   {
+    id: "mizen-malin",
+    at: "2018-06",
+    kind: "life",
+    title: "Mizen Head to Malin Head",
+    org: "600 km, for charity",
+    detail:
+      "The length of the island by bike, from the south-west tip at Mizen Head to the northernmost point at Malin Head, finishing on 3 June 2018.",
+    era: "cycling",
+    colour: "#5CC8F5",
+    major: true,
+  },
+  {
     id: "team-lead",
     at: "2019-03",
     kind: "role",

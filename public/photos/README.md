@@ -1,7 +1,8 @@
 # Photos
 
-Drop images into the era folder they belong to, then run `npm run photos` from
-the project root.
+Each era has its own folder. Files are named `YYYY-MM-DD-short-description.jpg`,
+and that date prefix does real work: it's shown on the site, it sorts the
+gallery, and it decides which timeline milestone the photo appears under.
 
 | Folder             | Era       | What belongs here                          |
 | ------------------ | --------- | ------------------------------------------ |
@@ -16,26 +17,31 @@ the project root.
 | `dnd/`             | Ongoing   | Dungeons & Dragons                          |
 | `misc/`            | —         | Anything that doesn't file neatly           |
 
-The folders are recreated automatically by `npm run photos` if they're missing,
-so don't worry if a fresh clone or an upload drops the empty ones.
+After adding or removing photos, run `npm run photos` from the project root.
+The folders are recreated automatically if they're missing.
+
+## How the files are prepared
+
+Every photo on the site went through the same steps before it was added:
+
+- **EXIF metadata stripped**, including any GPS coordinates. Phone photos can
+  carry the exact location they were taken.
+- Resized to at most 1600px, re-encoded as JPEG at quality 82.
+- A second copy at 800px wide saved in `<era>/thumbs/` with the same filename.
+  Grids, timeline cards and the cycling strip load the thumbnail; the full file
+  only loads when someone opens it in the lightbox.
+
+A photo without a thumbnail still works — it's just served full size
+everywhere. Two photos taken on the same day sort alphabetically, so add a
+`-01-`, `-02-` after the date to fix their order.
 
 ## Captions
 
-Optional, two ways:
+In `captions.json` next to this file, keyed by `<era>/<filename>`:
 
-1. In the filename, after a double underscore —
-   `2019-06__first-week-as-team-lead.jpg` becomes "First week as team lead".
-2. In a `captions.json` next to this file:
-   ```json
-   { "webio-lead/offsite.jpg": "Team offsite, Wicklow, 2019" }
-   ```
+```json
+{ "webio-lead/2019-06-01-offsite.jpg": "Team offsite, Wicklow" }
+```
 
-Filenames sort alphabetically within an era, so a `YYYY-MM-` prefix keeps them
-in chronological order.
-
-## Before you add photos from a phone
-
-Phone photos carry EXIF metadata including GPS coordinates. Until the build-time
-image pipeline lands (see `DEPLOYMENT.md`, Phase 7), strip that yourself — on
-macOS, opening an image in Preview and using **Tools → Show Inspector** will show
-you whether there's location data attached.
+A caption can also go in the filename after a double underscore, but
+`captions.json` is better — filenames can't carry punctuation or a fada.

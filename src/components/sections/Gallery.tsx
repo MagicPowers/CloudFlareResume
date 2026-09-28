@@ -7,7 +7,7 @@ import { ChevronLeft, ChevronRight, FolderOpen, X } from "lucide-react";
 import { eras, photos, type EraId } from "@/data/gallery";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { Reveal } from "@/components/ui/Reveal";
-import { cn } from "@/lib/utils";
+import { cn, formatDay } from "@/lib/utils";
 
 function EmptyState() {
   return (
@@ -96,7 +96,7 @@ export function Gallery() {
             <span className="italic text-fg-dim"> with photographic evidence</span>
           </>
         }
-        lede="Offsites, launches, whiteboards, bikes and at least one anatomy museum."
+        lede="Old offices, architecture on whiteboards, mandatory Christmas jumpers, and a bike held over my head at Malin Head."
         className="mb-10"
       />
 
@@ -153,7 +153,7 @@ export function Gallery() {
                     className="group relative block w-full break-inside-avoid overflow-hidden rounded-lg border border-line bg-surface-2"
                   >
                     <Image
-                      src={photo.src}
+                      src={photo.thumb ?? photo.src}
                       alt={photo.caption ?? `${era?.label ?? "Photo"}`}
                       width={photo.width}
                       height={photo.height}
@@ -166,7 +166,7 @@ export function Gallery() {
                         className="block font-mono text-[9.5px] uppercase tracking-[0.14em]"
                         style={{ color: era?.colour }}
                       >
-                        {era?.label}
+                        {photo.date ? formatDay(photo.date) : era?.label}
                       </span>
                       {photo.caption && (
                         <span className="mt-0.5 block text-[12px] leading-snug text-fg">
@@ -198,7 +198,8 @@ export function Gallery() {
                   className="font-mono text-[10px] uppercase tracking-[0.16em]"
                   style={{ color: currentEra?.colour }}
                 >
-                  {currentEra?.label} · {currentEra?.years}
+                  {currentEra?.label} ·{" "}
+                  {current.date ? formatDay(current.date) : currentEra?.years}
                 </p>
                 {current.caption && (
                   <p className="mt-1 text-[14px] text-fg">{current.caption}</p>

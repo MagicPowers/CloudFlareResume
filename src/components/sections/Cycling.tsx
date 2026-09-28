@@ -10,9 +10,10 @@ import {
   rides,
   type LatLon,
 } from "@/data/cycling";
+import { photosByEra } from "@/data/gallery";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { Reveal } from "@/components/ui/Reveal";
-import { cn } from "@/lib/utils";
+import { cn, formatDay } from "@/lib/utils";
 
 const { latMin, latMax, lonMin, lonMax } = IRELAND_BOUNDS;
 const LAT_MID = (latMin + latMax) / 2;
@@ -65,6 +66,12 @@ export function Cycling() {
   const inView = useInView(wrapRef, { amount: 0.35 });
 
   const ride = rides.find((r) => r.id === activeId)!;
+
+  const ridePhotos = useMemo(() => {
+    if (!ride.photosBetween) return [];
+    const [from, to] = ride.photosBetween;
+    return photosByEra("cycling").filter((p) => p.date && p.date >= from && p.date <= to);
+  }, [ride]);
 
   const republicPath = useMemo(
     () => polyPath(IRELAND_REPUBLIC.map(project), true),
@@ -157,10 +164,36 @@ export function Cycling() {
                 {ride.distanceKm}
               </span>
               <span className="font-mono text-sm text-fg-faint">km</span>
+              {ride.finished && (
+                <span className="ml-3 font-mono text-[11px] uppercase tracking-[0.14em] text-fg-faint">
+                  Finished {formatDay(ride.finished)}
+                </span>
+              )}
             </p>
             <p className="mt-4 max-w-[46ch] text-[14.5px] leading-relaxed text-fg-dim">
               {ride.blurb}
             </p>
+
+            {ridePhotos.length > 0 && (
+              <ul className="mt-6 grid max-w-[460px] grid-cols-3 gap-2">
+                {ridePhotos.map((p) => (
+                  <li
+                    key={p.src}
+                    className="relative aspect-square overflow-hidden rounded-lg border border-line bg-surface-2"
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={p.thumb ?? p.src}
+                      alt={p.caption ?? ride.name}
+                      title={p.caption}
+                      loading="lazy"
+                      decoding="async"
+                      className="size-full object-cover"
+                    />
+                  </li>
+                ))}
+              </ul>
+            )}
 
             <ol className="mt-6 flex flex-wrap gap-x-1.5 gap-y-2">
               {ride.waypoints.map((w, i) => (

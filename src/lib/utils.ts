@@ -27,6 +27,13 @@ export function formatMonth(value: string): string {
   return `${MONTHS[Number(m) - 1]} ${y}`;
 }
 
+/** "2017-03-15" -> "15 Mar 2017". "2017-03" -> "Mar 2017". */
+export function formatDay(value: string): string {
+  const [y, m, d] = value.split("-");
+  const month = MONTHS[Number(m) - 1];
+  return d ? `${Number(d)} ${month} ${y}` : `${month} ${y}`;
+}
+
 export function toDate(value: string): Date {
   if (value === "present") return new Date();
   const [y, m] = value.split("-").map(Number);

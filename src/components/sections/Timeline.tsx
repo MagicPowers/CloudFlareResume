@@ -5,7 +5,7 @@ import { motion, useScroll, useSpring, useTransform } from "motion/react";
 import { Minus, MoveHorizontal, Plus } from "lucide-react";
 import Image from "next/image";
 import { timelineSorted, KIND_LABEL, type Milestone } from "@/data/timeline";
-import { photosByEra } from "@/data/gallery";
+import { photos as allPhotos, type Photo } from "@/data/gallery";
 import { formatMonth, toDate, clamp, cn } from "@/lib/utils";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { useSite } from "@/lib/site-state";
@@ -25,6 +25,34 @@ const KIND_DOT: Record<Milestone["kind"], string> = {
   life: "✦",
   team: "■",
 };
+
+/**
+ * Each photo belongs to exactly one milestone: the latest one in its era that
+ * the photo doesn't predate. Undated photos go to the era's first milestone.
+ */
+function assignPhotos(milestones: Milestone[]): Map<string, Photo[]> {
+  const byMilestone = new Map<string, Photo[]>(milestones.map((m) => [m.id, []]));
+
+  for (const photo of allPhotos) {
+    const candidates = milestones.filter((m) => m.era === photo.era);
+    if (candidates.length === 0) continue;
+
+    const month = photo.date?.slice(0, 7);
+    let home = candidates[0];
+    if (month) {
+      for (const m of candidates) if (m.at <= month) home = m;
+    }
+    byMilestone.get(home.id)!.push(photo);
+  }
+  return byMilestone;
+}
+
+const PHOTOS_BY_MILESTONE = assignPhotos(timelineSorted);
+
+/** A chapter's first and last photo: how it started, how it ended. */
+function bookends(photos: Photo[]): Photo[] {
+  return photos.length <= 2 ? photos : [photos[0], photos[photos.length - 1]];
+}
 
 function useViewport() {
   const [size, setSize] = useState({ w: 1440, h: 900 });
@@ -46,7 +74,7 @@ function MilestoneCard({
   above: boolean;
   active: boolean;
 }) {
-  const photos = photosByEra(m.era).slice(0, 2);
+  const photos = bookends(PHOTOS_BY_MILESTONE.get(m.id) ?? []);
 
   return (
     <article
@@ -94,7 +122,7 @@ function MilestoneCard({
               className="relative aspect-4/3 overflow-hidden rounded-md border border-line"
             >
               <Image
-                src={p.src}
+                src={p.thumb ?? p.src}
                 alt={p.caption ?? m.title}
                 fill
                 sizes="140px"

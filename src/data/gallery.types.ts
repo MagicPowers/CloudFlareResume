@@ -20,8 +20,12 @@ export type Era = {
 
 export type Photo = {
   src: string;
+  /** Smaller copy for grids and cards. Falls back to `src` when absent. */
+  thumb?: string;
   era: EraId;
   width: number;
   height: number;
+  /** YYYY-MM-DD or YYYY-MM, read from the filename. */
+  date?: string;
   caption?: string;
 };

@@ -40,42 +40,24 @@ npx serve out       # preview the production build (next start won't work —
 
 ## Adding your photos
 
-This is the one thing the site is waiting on.
+Photos live in `public/photos/<era>/`, named `YYYY-MM-DD-short-description.jpg`.
+The full rules — era folders, thumbnails, captions, and how files are prepared —
+are in [`public/photos/README.md`](./public/photos/README.md).
 
-1. Drop images into the era folder they belong to:
+The short version: photos go through EXIF stripping and resizing before they're
+added, each gets an 800px thumbnail in `<era>/thumbs/`, captions go in
+`public/photos/captions.json`, and then:
 
-   ```
-   public/photos/trinity/          2011–2015  Trinity & Glasgow
-   public/photos/science-gallery/  2013–2015  Science Gallery
-   public/photos/webio-early/      2016–2019  Webio, building
-   public/photos/webio-lead/       2019–2023  Webio, leading
-   public/photos/webio-dx/         2023       Webio, developer experience
-   public/photos/revium/           2024       Revium
-   public/photos/hertz/            2024–now   Hertz
-   public/photos/cycling/          Ongoing    On the bike
-   public/photos/dnd/              Ongoing    Dungeons & Dragons
-   public/photos/misc/             —          Everything else
-   ```
+```bash
+npm run photos
+```
 
-2. Run `npm run photos`.
-
-That scans the folders, reads each image's real dimensions, and writes
-`src/data/gallery.generated.ts`. Baking the dimensions in at build time is what
-stops the masonry grid from jumping around as images load. The gallery, the
-timeline cards and the lightbox all read from that one manifest, so photos
-appear everywhere at once. `npm run build` runs it automatically.
-
-**Captions** are optional, and there are two ways to add one:
-
-- In the filename, after a double underscore:
-  `2019__first-week-as-team-lead.jpg` → "First week as team lead"
-- Or in `public/photos/captions.json`:
-  ```json
-  { "webio-lead/offsite.jpg": "Team offsite, Wicklow, 2019" }
-  ```
-
-Filenames sort alphabetically within an era, so a `YYYY-MM-` prefix keeps them
-in chronological order.
+That reads every image's real dimensions and date and writes
+`src/data/gallery.generated.ts`. The gallery, the timeline cards, the cycling
+section and the lightbox all read from that one manifest. The date in the
+filename decides which timeline milestone a photo appears under — each card
+shows the first and last photo of its chapter. `npm run build` runs it
+automatically.
 
 ## Editing the content
 
